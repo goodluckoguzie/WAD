@@ -1,4 +1,4 @@
-# Part 2: Enhancing the Web API with PM2 and Coding Exercises
+# Week 1 : Part 2: Enhancing the Web API with PM2 and Coding Exercises
 
 This guide builds on the `WAD/week1` project, adding PM2 to manage the server and implementing coding exercises (a `/greet/:name` route and song-related API endpoints). We'll use the Windows Command Prompt, explain all scripts, provide full scripts, and update GitHub.
 
