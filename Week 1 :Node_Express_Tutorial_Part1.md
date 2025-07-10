@@ -63,8 +63,6 @@ We'll create a `WAD` folder with a `week1` subfolder.
      cd week1
      ```
 
-**Why this matters**: Organized folders keep your project tidy, like sorting notes into binders.
-
 ---
 
 ## Step 3: Set Up the Node.js Project
