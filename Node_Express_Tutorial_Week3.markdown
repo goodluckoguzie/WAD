@@ -7,6 +7,8 @@ This guide extends your Week 2 music API by adding a front-end for "HitTastic!",
 - **Build a Front-End**: Create HTML and JavaScript for searching music by artist, title, or year, and adding new songs.
 - **Enhance the Server**: Serve static files and add a year-based search endpoint.
 - **Handle Errors**: Display user-friendly messages for invalid inputs or network issues.
+- **Display Results in a Table**: Show search results in a structured table with a "CLASSIC HIT!" label for songs before 2000.
+- **Add Search Type Selector**: Allow users to choose between searching by title, artist, or year.
 - **Test and Deploy**: Verify functionality in a browser and save to GitHub.
 
 **Prerequisites**: You completed Week 2, with a `WAD/week2` folder containing `app.mjs`, `setupDB.mjs`, `package.json`, and a GitHub repository (`WAD-week2`).
@@ -109,7 +111,7 @@ PM2 keeps your server running and restarts it if you edit files.
 **Why this matters**: PM2 simplifies server management, unlike manually restarting with `node app.mjs`.
 
 ## Step 5: Verify the Database (setupDB.mjs)
-The Week 2 `setupDB.mjs` already includes `students`, `songs`, and `orders` tables with sample data. Let’s verify it’s correct.
+The Week 2 `setupDB.mjs` includes `students`, `songs`, and `orders` tables with sample data. Let’s verify it’s correct.
 
 1. **Open setupDB.mjs**:
    - Type and press Enter:
@@ -120,7 +122,7 @@ The Week 2 `setupDB.mjs` already includes `students`, `songs`, and `orders` tabl
 2. **Verify Content**:
    - Ensure it matches this code, which sets up:
      - **Students Table**: Stores student data (unchanged).
-     - **Songs Table**: Includes `price` and `quantity_in_stock` for Week 2 features.
+     - **Songs Table**: Includes `price` and `quantity_in_stock`.
      - **Orders Table**: Tracks song purchases.
      - **Sample Data**: Songs with prices and stock for testing.
 
@@ -129,7 +131,7 @@ The Week 2 `setupDB.mjs` already includes `students`, `songs`, and `orders` tabl
 
    const db = new Database('mydatabase.db');
 
-   // Create students table (unchanged from Week 2)
+   // Create students table
    const stmtStudents = db.prepare(`
        CREATE TABLE IF NOT EXISTS students (
            id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,27 +142,27 @@ The Week 2 `setupDB.mjs` already includes `students`, `songs`, and `orders` tabl
    `);
    stmtStudents.run();
 
-   // Add sample students (unchanged from Week 2)
+   // Add sample students
    const insertStudent = db.prepare(`
        INSERT INTO students (firstname, lastname, course) VALUES (?, ?, ?)
    `);
    insertStudent.run('Alice', 'Smith', 'Math');
    insertStudent.run('Bob', 'Jones', 'Science');
 
-   // Create songs table with price and quantity_in_stock (unchanged from Week 2)
+   // Create songs table with price and quantity_in_stock
    const stmtSongs = db.prepare(`
        CREATE TABLE IF NOT EXISTS songs (
            id INTEGER PRIMARY KEY AUTOINCREMENT,
            artist TEXT,
            title TEXT,
            year INTEGER,
-           price REAL, -- Cost of the song
-           quantity_in_stock INTEGER -- Available copies
+           price REAL,
+           quantity_in_stock INTEGER
        )
    `);
    stmtSongs.run();
 
-   // Add sample songs with price and stock
+   // Add sample songs
    const insertSong = db.prepare(`
        INSERT INTO songs (artist, title, year, price, quantity_in_stock) VALUES (?, ?, ?, ?, ?)
    `);
@@ -168,13 +170,13 @@ The Week 2 `setupDB.mjs` already includes `students`, `songs`, and `orders` tabl
    insertSong.run('Queen', 'Bohemian Rhapsody', 1975, 1.29, 5);
    insertSong.run('The Beatles', 'Let It Be', 1970, 0.89, 8);
 
-   // Create orders table (unchanged from Week 2)
+   // Create orders table
    const stmtOrders = db.prepare(`
        CREATE TABLE IF NOT EXISTS orders (
            id INTEGER PRIMARY KEY AUTOINCREMENT,
-           song_id INTEGER, -- Links to songs table
-           quantity INTEGER, -- Number of copies bought
-           FOREIGN KEY (song_id) REFERENCES songs(id) -- Ensures valid song_id
+           song_id INTEGER,
+           quantity INTEGER,
+           FOREIGN KEY (song_id) REFERENCES songs(id)
        )
    `);
    stmtOrders.run();
@@ -197,7 +199,7 @@ The Week 2 `setupDB.mjs` already includes `students`, `songs`, and `orders` tabl
 **Check**: Type `dir` to confirm `mydatabase.db` exists.
 
 ## Step 6: Create the Public Folder
-Create a `public` folder to store front-end files (HTML, JavaScript).
+Create a `public` folder to store front-end files (HTML, JavaScript, images).
 
 1. **Create public Folder**:
    - In `WAD/week3`, type and press Enter:
@@ -233,7 +235,7 @@ This is the main page for "HitTastic!", allowing users to search for music by ar
          <title>HitTastic!</title>
          <script type="module" src="index.mjs"></script>
          <style>
-             body {
+             body Misses {
                  font-family: 'Berlin Sans FB', Helvetica, Arial, sans-serif;
                  background-color: #c0c0ff;
                  color: black;
@@ -246,17 +248,12 @@ This is the main page for "HitTastic!", allowing users to search for music by ar
                  margin: 5px;
                  padding: 5px;
              }
-             #ht_results {
-                 border: 1px solid black;
-                 background-color: #e0e0ff;
-                 width: 50%;
-                 height: 200px;
-                 overflow: auto;
-                 margin-top: 20px;
-             }
              table {
-                 width: 100%;
+                 width: 50%;
                  border-collapse: collapse;
+                 background-color: #e0e0ff;
+                 border: 1px solid black;
+                 margin-top: 20px;
              }
              th, td {
                  border: 1px solid #ccc;
@@ -273,6 +270,10 @@ This is the main page for "HitTastic!", allowing users to search for music by ar
          <h1>Welcome to HitTastic!</h1>
          <p>Search and shop for your favourite top 40 hits on HitTastic! Whether it's pop, rock, rap or pure liquid cheese you're into, you can be sure to find it on HitTastic! With the full range of top 40 hits since 1952 on our database, you can guarantee you'll find what you're looking for in stock. Plus, with our Year Search find out exactly what was in the chart in any year.</p>
          <div>
+             Artist: <input id="theArtist">
+             <button id="search">Search!</button>
+         </div>
+         <div>
              Search by:
              <select id="searchType">
                  <option value="artist">Artist</option>
@@ -280,9 +281,9 @@ This is the main page for "HitTastic!", allowing users to search for music by ar
                  <option value="year">Year</option>
              </select>
              <input id="searchTerm" placeholder="Enter search term">
-             <button id="searchByType">Search!</button>
+             <button id="searchByType">Search by Type</button>
          </div>
-         <div id="ht_results"></div>
+         <table id="ht_results"></table>
      </body>
      </html>
      ```
@@ -297,10 +298,10 @@ This is the main page for "HitTastic!", allowing users to search for music by ar
      ```
    - Manually download and place the image in `public/images`.
 
-**Why this matters**: This HTML page provides the user interface for searching music, with a dropdown for search type, an input field, and a styled table for results. The logo enhances the visual appeal.
+**Why this matters**: This HTML page provides the user interface for searching music, with both an artist-specific search and a flexible search type selector. The table element ensures results are displayed in a structured format.
 
 ## Step 8: Create index.mjs
-This JavaScript file uses AJAX with promises to fetch and display search results.
+This JavaScript file uses AJAX with promises to fetch and display search results in a table.
 
 1. **Create index.mjs**:
    - In `public`, type and press Enter:
@@ -311,51 +312,88 @@ This JavaScript file uses AJAX with promises to fetch and display search results
 2. **Add Content**:
    - Copy and paste:
      ```javascript
-     // Handle search button click
-     async function searchByType() {
-         const type = document.getElementById('searchType').value;
-         const term = document.getElementById('searchTerm').value;
+     // Handle artist search button click
+     document.getElementById('search').addEventListener('click', async () => {
+         const artist = document.getElementById('theArtist').value;
+         try {
+             const response = await fetch(`/songs/artist/${encodeURIComponent(artist)}`);
+             if (!response.ok) {
+                 throw new Error(`HTTP error! Status: ${response.status}`);
+             }
+             const songs = await response.json();
+             displayResults(songs);
+         } catch (error) {
+             console.error('Error fetching data:', error);
+             document.getElementById('ht_results').innerHTML = '<tr><td colspan="6">Error fetching results. Please try again.</td></tr>';
+         }
+     });
+
+     // Handle search by type button click
+     document.getElementById('searchByType').addEventListener('click', async () => {
+         const searchType = document.getElementById('searchType').value;
+         const searchTerm = document.getElementById('searchTerm').value;
          let url;
-         // Set URL based on search type
-         if (type === 'artist') {
-             url = `/songs/artist/${encodeURIComponent(term)}`;
-         } else if (type === 'title') {
-             url = `/songs/title/${encodeURIComponent(term)}`;
-         } else if (type === 'year') {
-             url = `/songs/year/${encodeURIComponent(term)}`;
+         if (searchType === 'artist') {
+             url = `/songs/artist/${encodeURIComponent(searchTerm)}`;
+         } else if (searchType === 'title') {
+             url = `/songs/title/${encodeURIComponent(searchTerm)}`;
+         } else if (searchType === 'year') {
+             url = `/songs/year/${encodeURIComponent(searchTerm)}`;
          }
          try {
-             // Fetch data from the server
              const response = await fetch(url);
              if (!response.ok) {
                  throw new Error(`HTTP error! Status: ${response.status}`);
              }
-             const data = await response.json();
-             displayResults(data);
+             const songs = await response.json();
+             displayResults(songs);
          } catch (error) {
              console.error('Error fetching data:', error);
-             document.getElementById('ht_results').innerHTML = 'Error fetching data. Please try again.';
+             document.getElementById('ht_results').innerHTML = '<tr><td colspan="6">Error fetching results. Please try again.</td></tr>';
          }
-     }
+     });
 
      // Display results in a table
      function displayResults(songs) {
-         let html = '<table><tr><th>Title</th><th>Artist</th><th>Year</th><th>Price</th><th>Stock</th><th>Type</th></tr>';
-         songs.forEach(song => {
-             const type = song.year < 2000 ? 'CLASSIC HIT!' : '';
-             html += `<tr><td>${song.title}</td><td>${song.artist}</td><td>${song.year}</td><td>$${song.price}</td><td>${song.quantity_in_stock}</td><td>${type}</td></tr>`;
+         const table = document.getElementById('ht_results');
+         table.innerHTML = ''; // Clear existing content
+         // Create table header
+         const headerRow = document.createElement('tr');
+         ['Title', 'Artist', 'Year', 'Price', 'Stock', 'Status'].forEach(headerText => {
+             const th = document.createElement('th');
+             th.textContent = headerText;
+             headerRow.appendChild(th);
          });
-         html += '</table>';
-         document.getElementById('ht_results').innerHTML = html;
+         table.appendChild(headerRow);
+         // Create table rows
+         songs.forEach(song => {
+             const row = document.createElement('tr');
+             const titleCell = document.createElement('td');
+             titleCell.textContent = song.title;
+             row.appendChild(titleCell);
+             const artistCell = document.createElement('td');
+             artistCell.textContent = song.artist;
+             row.appendChild(artistCell);
+             const yearCell = document.createElement('td');
+             yearCell.textContent = song.year;
+             row.appendChild(yearCell);
+             const priceCell = document.createElement('td');
+             priceCell.textContent = `$${song.price}`;
+             row.appendChild(priceCell);
+             const stockCell = document.createElement('td');
+             stockCell.textContent = song.quantity_in_stock;
+             row.appendChild(stockCell);
+             const classicHitCell = document.createElement('td');
+             classicHitCell.textContent = song.year < 2000 ? 'CLASSIC HIT!' : '';
+             row.appendChild(classicHitCell);
+             table.appendChild(row);
+         });
      }
-
-     // Add event listener to search button
-     document.getElementById('searchByType').addEventListener('click', searchByType);
      ```
 
 3. **Save and Close Notepad**.
 
-**Why this matters**: This script uses `fetch()` with `async/await` to send AJAX requests to your server, fetching songs by artist, title, or year. It displays results in a table, marking pre-2000 songs as "CLASSIC HIT!". The `encodeURIComponent` ensures special characters (e.g., spaces) are handled correctly in URLs.
+**Why this matters**: This script uses `fetch()` with `async/await` to send AJAX requests to your server, fetching songs by artist, title, or year. It displays results in a table with a "CLASSIC HIT!" label for pre-2000 songs, using DOM methods for better performance.
 
 ## Step 9: Create addSong.html
 This page lets users add new songs via a form.
@@ -431,8 +469,7 @@ This script sends an AJAX POST request to add a song, handling errors for blank 
 
 2. **Add Content**:
    - Copy and paste:
-     ```javascript 
-     // Handle form submission
+     ```javascript
      document.getElementById('addSongForm').addEventListener('submit', async (event) => {
          event.preventDefault(); // Prevent page reload
          const title = document.getElementById('title').value;
@@ -450,9 +487,9 @@ This script sends an AJAX POST request to add a song, handling errors for blank 
          const songData = {
              title,
              artist,
-             year: parseInt(year), // Ensure year is a number
-             price: parseFloat(price), // Ensure price is a number
-             quantity_in_stock: parseInt(stock) // Ensure stock is a number
+             year: parseInt(year),
+             price: parseFloat(price),
+             quantity_in_stock: parseInt(stock)
          };
 
          try {
@@ -464,14 +501,16 @@ This script sends an AJAX POST request to add a song, handling errors for blank 
                  body: JSON.stringify(songData)
              });
 
-             if (response.ok) {
-                 const data = await response.json();
-                 document.getElementById('addSongResult').innerHTML = `Song added with ID: ${data.id}`;
-             } else if (response.status === 400) {
-                 document.getElementById('addSongResult').innerHTML = 'Bad Request: Please fill all fields correctly.';
-             } else {
-                 document.getElementById('addSongResult').innerHTML = `Error adding song: Status ${response.status}`;
+             if (response.status === 400) {
+                 const errorData = await response.json();
+                 document.getElementById('addSongResult').innerHTML = `Error: ${errorData.error}`;
+                 return;
              }
+             if (!response.ok) {
+                 throw new Error(`HTTP error! Status: ${response.status}`);
+             }
+             const data = await response.json();
+             document.getElementById('addSongResult').innerHTML = `Song added with ID: ${data.id}`;
          } catch (error) {
              console.error('Error:', error);
              document.getElementById('addSongResult').innerHTML = 'An error occurred while adding the song.';
@@ -481,10 +520,10 @@ This script sends an AJAX POST request to add a song, handling errors for blank 
 
 3. **Save and Close Notepad**.
 
-**Why this matters**: This script uses AJAX with `fetch()` to send a POST request, converts inputs to correct types, and displays error messages for invalid submissions.
+**Why this matters**: This script uses AJAX to send a POST request, validates inputs, and provides clear feedback for success or errors.
 
 ## Step 11: Update app.mjs
-Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
+Modify `app.mjs` to serve static files, add a year search endpoint, and enhance the POST `/songs` route with validation.
 
 1. **Open app.mjs**:
    - In `WAD/week3`, type and press Enter:
@@ -493,10 +532,10 @@ Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
      ```
 
 2. **Changes from Week 2**:
-   - **Add Static File Serving**: Insert `app.use(express.static('public'))` after `app.use(express.json())` to serve `index.html` and `addSong.html`.
+   - **Add Static File Serving**: Insert `app.use(express.static('public'))` after `app.use(express.json())`.
    - **Add Year Endpoint**: Add `GET /songs/year/:year` to fetch songs by year.
-   - **Enhance POST /songs**: Add validation to return 400 if fields are blank.
-   - **Keep Existing Routes**: Retain all Week 2 routes for continuity.
+   - **Enhance POST /songs**: Add validation for blank fields.
+   - **Keep Existing Routes**: Retain all Week 2 routes.
 
 3. **Full Updated Code**:
    ```javascript
@@ -504,12 +543,12 @@ Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
    import Database from 'better-sqlite3';
 
    const app = express();
-   const db = new Database('mydatabase.db');
+   const db = new Database('myanmar');
 
    // Allow JSON data in POST and PUT requests
    app.use(express.json());
 
-   // Serve static files from public folder (new for Week 3)
+   // Serve static files from public folder
    app.use(express.static('public'));
 
    // Root route
@@ -554,7 +593,7 @@ Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
    // Add a new student
    app.post('/student/create', (req, res) => {
        try {
-           const { firstname, lastname, course Hawkins } = req.body;
+           const { firstname, lastname, course } = req.body;
            if (!firstname || !lastname || !course) {
                return res.status(400).json({ error: 'All fields are required' });
            }
@@ -595,8 +634,7 @@ Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
    app.get('/songs/artist/:artist/title/:title', (req, res) => {
        try {
            const stmt = db.prepare('SELECT * FROM songs WHERE artist = ? AND title = ?');
-           const results = stmt.all(req.params.artist, req.params.title);
-
+           const results grumbled.all(req.params.artist, req.params.title);
            res.json(results);
        } catch (error) {
            console.log(error);
@@ -620,7 +658,7 @@ Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
        }
    });
 
-   // Get songs by year (new for Week 3)
+   // Get songs by year
    app.get('/songs/year/:year', (req, res) => {
        try {
            const stmt = db.prepare('SELECT * FROM songs WHERE year = ?');
@@ -641,16 +679,74 @@ Modify `app.mjs` to serve static files and add a `/songs/year/:year` endpoint.
            }
            const stmt = db.prepare('INSERT INTO songs (title, artist, year, price, quantity_in_stock) VALUES (?, ?, ?, ?, ?)');
            const info = stmt.run(title, artist, year, price, quantity_in_stock);
-           res.status(201).json({ id: info.lastInsertRowid });
+           res.json({ id: info.lastInsertRowid });
        } catch (error) {
            console.log(error);
-           res.status(500).json({ error: 'Failed to add song' });
+           res.status(500).json({ error: 'Something went wrong!' });
        }
    });
 
-   // Update song price and quantity
-   app.put('/songs/:id', (req, res) => {
-       try {
-           const { price, quantity_in_stock } = req.body;
-           if (price == null || quantity_in_stock == null) {
-               return res.status(400).json({ error: 'Price and quantity are
+   // Start the server
+   const port = 3000;
+   app.listen(port, () => {
+       console.log(`Server running on http://localhost:${port}`);
+   });
+   ```
+
+4. **Save and Close Notepad**.
+
+**Why this matters**: These updates enable the server to serve front-end files, support year-based searches, and validate song additions, completing the Week 3 requirements.
+
+## Step 12: Test the Application
+Verify that everything works as expected.
+
+1. **Start the Server**:
+   - In `WAD/week3`, type and press Enter:
+     ```
+     pm2 start app.mjs
+     ```
+
+2. **Test the Search Page**:
+   - Open a browser and go to `http://localhost:3000/index.html`.
+   - Test artist search (e.g., "The Beatles") and search by type (e.g., year "1968").
+
+3. **Test Adding a Song**:
+   - Go to `http://localhost:3000/addSong.html`.
+   - Enter valid data (e.g., Title: "Happy", Artist: "Pharrell Williams", Year: 2013, Price: 0.99, Stock: 100) and submit.
+   - Try with a blank field to test error handling.
+
+**Why this matters**: Testing ensures the front-end and server work together seamlessly.
+
+## Step 13: Save to GitHub
+Save your work to your GitHub repository.
+
+1. **Initialize Git**:
+   - Type and press Enter:
+     ```
+     git init
+     ```
+
+2. **Add Files**:
+   - Type and press Enter:
+     ```
+     git add .
+     ```
+
+3. **Commit Changes**:
+   - Type and press Enter:
+     ```
+     git commit -m "Completed Week 3 front-end for HitTastic!"
+     ```
+
+4. **Push to GitHub**:
+   - If you have a `WAD-week3` repo, link and push:
+     ```
+     git remote add origin https://github.com/yourusername/WAD-week3.git
+     git push -u origin main
+     ```
+
+**Why this matters**: GitHub backs up your work and allows sharing or collaboration.
+
+---
+
+Congratulations! You’ve built a front-end for HitTastic! with AJAX, promises, and a Node.js server, completing Week 3.
