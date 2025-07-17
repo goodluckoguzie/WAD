@@ -538,7 +538,7 @@ Modify `app.mjs` to serve static files, add a year search endpoint, and enhance 
    - **Keep Existing Routes**: Retain all Week 2 routes.
 
 3. **Full Updated Code**:
-   ```javascript
+```javascript
 import express from 'express';
 import Database from 'better-sqlite3';
 
@@ -691,8 +691,8 @@ const port = 3000;
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });
-
 ```
+
 
 4. **Save and Close Notepad**.
 
