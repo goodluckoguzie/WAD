@@ -26,7 +26,7 @@ Hello! In Week 5 of your Web Application Development (WAD) course, we’re going
 - You’ve done Weeks 1–4, so you know a bit about Node.js, Express, and SQLite.
 - You have Node.js installed (check by typing `node --version` in Command Prompt).
 - You’re okay typing commands in the black Command Prompt window.
-- You have a `mydatabase.db` file from Week 2 with an `artists` table (we’ll assume it has columns `name`, `hometown`, `latitude`, `longitude`).
+- Your Week 4 project is in a folder named `week4`.
 
 ## Step 1: Understanding the Basics
 
@@ -310,14 +310,14 @@ Now let’s make a map showing Southampton, then tweak it to test other places.
 
 ## Step 4: Exercise 1 - Trying the Leaflet Example
 
-The handout asks you to try the Leaflet example by adding `map.html` and `map.mjs` to your Weeks 3–4 project and serving it via your Express server. Let’s do it and discuss why it doesn’t work as expected.
+The handout asks you to try the Leaflet example by adding `map.html` and `map.mjs` to your Week 4 project (in the `week4` folder) and serving it via your Express server. Let’s do it and discuss why it doesn’t work as expected.
 
-1. **Set Up in Weeks 3–4 Project**:
+1. **Set Up in Week 4 Project**:
 
-   - Go to your Weeks 3–4 folder (assuming it’s `WAD-week3-4`):
+   - Go to your Week 4 folder (named `week4`):
 
      ```bash
-     cd %userprofile%\Desktop\WAD-week3-4
+     cd %userprofile%\Desktop\week4
      ```
    - Create a `public` folder if it doesn’t exist:
 
@@ -344,6 +344,11 @@ The handout asks you to try the Leaflet example by adding `map.html` and `map.mj
        </html>
        ```
      - Save and close.
+     - **Explanation**:
+       - `<title>Leaflet Example</title>`: Sets the browser tab title.
+       - `<script type='module' src='map.mjs'>`: Links the JavaScript module.
+       - `<h1>Leaflet Test</h1>`: Displays a heading.
+       - `<div id="map1" style="width:800px; height:600px">`: Creates a fixed-size box for the map.
    - Create `public/map.mjs`:
 
      ```bash
@@ -366,15 +371,30 @@ The handout asks you to try the Leaflet example by adding `map.html` and `map.mj
        map.setView([50.908,-1.4], 14);
        ```
      - Save and close.
+     - **Explanation**:
+       - `import 'leaflet';`: Loads the Leaflet library.
+       - `import 'leaflet/dist/leaflet.css';`: Loads Leaflet’s styles.
+       - `const map = L.map("map1");`: Creates a map linked to `<div id="map1">`.
+       - `const attrib=...`: Defines the OSM attribution text.
+       - `L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", ...)`: Fetches map tiles from OSM.
+       - `attribution: attrib`: Credits OSM.
+       - `.addTo(map)`: Adds tiles to the map.
+       - `map.setView([50.908,-1.4], 14)`: Centers the map on Southampton.
 
 2. **Run Express Server**:
 
-   - Assuming your Express server from Week 2 is in `WAD-week3-4`:
+   - Assuming your Express server from Week 4 is in `week4` (e.g., `app.mjs`):
 
      ```bash
      node app.mjs
      ```
    - Visit `http://localhost:3000/map.html`. The map won’t load.
+   - **Note**: If your Week 4 Express server isn’t set up to serve static files from `public`, add this to `app.mjs` before `app.listen`:
+
+     ```javascript
+     app.use(express.static('public'));
+     ```
+     - This tells Express to serve files like `map.html` from the `public` folder.
 
 3. **Discussion: Why It Doesn’t Work**:
 
@@ -513,7 +533,63 @@ Now we’ll connect your map to your “HitTastic!” server to show where artis
      - `express`: Runs the server.
      - `better-sqlite3`: Connects to your database.
      - `cors`: Lets your map talk to the server (solves same-origin policy issues).
-   - Copy your `mydatabase.db` from Week 2 to `WAD-week5/server` (assumes an `artists` table with `name`, `hometown`, `latitude`, `longitude`).
+   - **Create the SQLite Database**:
+
+     - Create `create-database.mjs`:
+
+       ```bash
+       notepad create-database.mjs
+       ```
+     - Paste:
+
+       ```javascript
+       import sqlite3 from 'better-sqlite3';
+
+       // Create or open the database
+       const db = new sqlite3('mydatabase.db');
+
+       // Create the artists table
+       db.exec(`
+           CREATE TABLE IF NOT EXISTS artists (
+               name TEXT,
+               hometown TEXT,
+               latitude REAL,
+               longitude REAL
+           );
+       `);
+
+       // Insert sample data (optional, for testing)
+       db.prepare(`
+           INSERT INTO artists (name, hometown, latitude, longitude)
+           VALUES (?, ?, ?, ?)
+       `).run('The Beatles', 'Liverpool', 53.408371, -2.991573);
+
+       db.prepare(`
+           INSERT INTO artists (name, hometown, latitude, longitude)
+           VALUES (?, ?, ?, ?)
+       `).run('Davido', 'Lagos', 6.524379, 3.379206);
+
+       // Close the database
+       db.close();
+       ```
+     - Save and close.
+     - **Explanation**:
+       - `import sqlite3 ...`: Loads the database library.
+       - `const db = new sqlite3('mydatabase.db')`: Creates a new `mydatabase.db` file in the `server` folder.
+       - `CREATE TABLE IF NOT EXISTS artists ...`: Makes a table with columns `name` (text), `hometown` (text), `latitude` (number), `longitude` (number).
+       - `INSERT INTO artists ...`: Adds two sample artists (The Beatles and Davido) with their hometowns and coordinates (from [https://www.latlong.net](https://www.latlong.net)).
+       - `db.close()`: Closes the database to save it.
+     - Run the script:
+
+       ```bash
+       node create-database.mjs
+       ```
+     - Check that `mydatabase.db` was created:
+
+       ```bash
+       dir
+       ```
+       - You should see `mydatabase.db`.
    - Create `app.mjs`:
 
      ```bash
@@ -553,7 +629,7 @@ Now we’ll connect your map to your “HitTastic!” server to show where artis
        - `const app = express();`: Creates the server.
        - `app.use(cors());`: Allows your map (port 5173) to talk to the server (port 3000).
        - `app.use(express.json());`: Reads JSON data sent to the server.
-       - `const db = new sqlite3('mydatabase.db');`: Opens your database.
+       - `const db = new sqlite3('mydatabase.db');`: Opens the newly created database.
        - `app.get('/hometown/:artist', ...)`: Creates a route to find an artist’s hometown.
        - `req.params.artist`: Gets the artist name from the URL (e.g., `/hometown/Queen`).
        - `db.prepare(...).get(artist)`: Finds one row in the `artists` table.
@@ -691,7 +767,7 @@ Now we’ll connect your map to your “HitTastic!” server to show where artis
 
    - Test:
      - Ensure Vite (`npx vite dev`) and PM2 (`pm2 start app.mjs --name Week5Server --watch`) are running.
-     - Go to `http://localhost:5173`, type an artist (e.g., “The Beatles”), click the button, and see the map move to their hometown.
+     - Go to `http://localhost:5173`, type an artist (e.g., “The Beatles”), click the button, and see the map move to Liverpool.
    - **Discussion**:
      - Without CORS, you’d see an error in the browser console (F12, “Console” tab) like “CORS policy: No ‘Access-Control-Allow-Origin’ header.”
      - **Why**: The map (port 5173) and server (port 3000) are on different ports, breaking the same-origin policy.
@@ -877,29 +953,30 @@ Let’s let users add new artists and hometowns by clicking the map.
                  L.marker([data.latitude, data.longitude]).addTo(map)
                      .bindPopup(data.hometown)
                      .openPopup();
-             })
-             .catch(error => {
-                 console.error('Error:', error);
-                 alert('Artist not found');
-             });
-     });
-     ```
-   - Save and close.
-   - **Explanation**:
-     - `const artist = prompt('Enter artist name:');`: Asks for an artist name.
-     - `const hometown = prompt('Enter hometown name:');`: Asks for a hometown.
-     - `if (artist && hometown) {`: Checks you entered both.
-     - `fetch('http://localhost:3000/hometown', ...)`: Sends data to the server.
-     - `method: 'POST'`: Says we’re adding new data.
-     - `headers: { 'Content-Type': 'application/json' }`: Tells the server we’re sending JSON.
-     - `body: JSON.stringify(...)`: Turns data into JSON format.
-     - `if (response.ok) {`: Checks if the server saved the data.
-     - `L.marker([lat, lng])...`: Adds a marker if successful.
+               })
+               .catch(error => {
+                   console.error('Error:', error);
+                   alert('Artist not found');
+               });
+       });
+       ```
+     - Save and close.
+     - **Explanation**:
+       - `const artist = prompt('Enter artist name:');`: Asks for an artist name.
+       - `const hometown = prompt('Enter hometown name:');`: Asks for a hometown.
+       - `if (artist && hometown) {`: Checks you entered both.
+       - `fetch('http://localhost:3000/hometown', ...)`: Sends data to the server.
+       - `method: 'POST'`: Says we’re adding new data.
+       - `headers: { 'Content-Type': 'application/json' }`: Tells the server we’re sending JSON.
+       - `body: JSON.stringify(...)`: Turns data into JSON format.
+       - `if (response.ok) {`: Checks if the server saved the data.
+       - `L.marker([lat, lng])...`: Adds a marker if successful.
 
 3. **Test**:
 
    - Click the map, enter an artist (e.g., “Davido”) and hometown (e.g., “Lagos”), and see a new marker.
-   - Check the database to confirm the new entry.
+   - Type “The Beatles” in the input field, click the search button, and see the map move to Liverpool.
+   - Check the database to confirm new entries (e.g., use a SQLite tool or query it).
 
 ## Step 8: Optional - Building for Production
 
@@ -954,19 +1031,20 @@ You’ve completed Week 5! You:
 - Set up Vite and Leaflet.
 - Made a map with a marker for Owerri (coordinates from [https://www.latlong.net](https://www.latlong.net)).
 - Added click events for new markers with popups.
-- Connected to an Express server to show and add artist hometowns.
+- Created a new SQLite database and connected it to an Express server to show and add artist hometowns.
 - Learned why bundlers like Vite are needed (Exercise 1) and how CORS fixes server issues (Exercise 2).
 
 **Next Steps**:
 
 - Try adding more Leaflet features, like drawing lines (see [Leaflet tutorials](https://leafletjs.com)).
 - Deploy your `dist` folder to a web server.
-- If anything breaks, check the browser console (F12) or ask for help!
+- If anything breaks, check the browser console (F12) or Command Prompt output, and let me know!
 
 **Code Explanation Table**:
 
-| File            | Purpose                                                                 |
-|-----------------|-------------------------------------------------------------------------|
-| `index.html`    | Shows the map, input field, and button; links to `main.mjs`.            |
-| `src/main.mjs`  | Sets up Leaflet map, Owerri marker, click events, and API calls.        |
-| `server/app.mjs`| Express server with routes to get and add artist hometowns.             |
+| File                  | Purpose                                                                 |
+|-----------------------|-------------------------------------------------------------------------|
+| `index.html`          | Shows the map, input field, and button; links to `main.mjs`.            |
+| `src/main.mjs`        | Sets up Leaflet map, Owerri marker, click events, and API calls.        |
+| `server/app.mjs`      | Express server with routes to get and add artist hometowns.             |
+| `server/create-database.mjs` | Creates `mydatabase.db` with an `artists` table and sample data. |
