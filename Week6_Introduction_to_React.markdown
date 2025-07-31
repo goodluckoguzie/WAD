@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Hello! In Week 6 of your Web Application Development (WAD) course, we’re going to learn about **React**, a powerful tool for building interactive web pages. We’ll set up a React app using **Vite** (the same tool from Week 5) and create a simple interactive form. This guide is written for someone new to coding (like a 10-year-old), so we’ll explain everything step by step. You’ll use the Windows Command Prompt, just like in previous weeks, to set up and run your project. By the end, you’ll have a web page where you can type in your name and age, and it will instantly display a personalized message (including whether you can vote and a pretend train fare). Let’s get started!
+We’re going to learn about **React**, a powerful tool for building interactive web pages. We’ll set up a React app using **Vite** (the same tool from Week 5) and create a simple interactive form. This guide is written for someone new to coding (like a 10-year-old), so we’ll explain everything step by step. You’ll use the Windows Command Prompt, just like in previous weeks, to set up and run your project. By the end, you’ll have a web page where you can type in your name and age, and it will instantly display a personalized message (including whether you can vote and a pretend train fare). Let’s get started!
 
 ### What You’ll Learn
 
