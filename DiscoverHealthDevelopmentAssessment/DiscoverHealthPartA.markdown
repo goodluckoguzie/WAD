@@ -1,8 +1,8 @@
-# Week 6: DiscoverHealth Part A – Building a REST API with Node.js and SQLite
+# DiscoverHealth Part A – Building a REST API with Node.js and SQLite
 
 ## Introduction
 
-In this week’s project, we’re building **DiscoverHealth Part A**, a REST API to manage healthcare resources using **Node.js**, **Express**, and **SQLite**. You’ll create an API that allows clients to list healthcare resources by region, add new resources, and "like" (recommend) resources. We’ll use the **Command Prompt** (Windows) or **Terminal** (macOS) to set up the project and test it with tools like a browser, Postman, or RESTer. By the end, you’ll have a working server that handles JSON data and interacts with a SQLite database.
+In this  project, we’re building **DiscoverHealth Part A**, a REST API to manage healthcare resources using **Node.js**, **Express**, and **SQLite**. You’ll create an API that allows clients to list healthcare resources by region, add new resources, and "like" (recommend) resources. We’ll use the **Command Prompt** (Windows) or **Terminal** (macOS) to set up the project and test it with tools like a browser, Postman, or RESTer. By the end, you’ll have a working server that handles JSON data and interacts with a SQLite database.
 
 ### What You’ll Learn
 
@@ -651,4 +651,3 @@ Congratulations on completing DiscoverHealth Part A! 🎉 You’ve built a fully
 * Check the terminal and browser console (F12) for errors if something doesn’t work.
 * Explore Express middleware or SQLite features for more advanced functionality.
 
-You now have a solid foundation in building REST APIs with Node.js and SQLite. This is a critical skill for web development, and you’re ready to tackle more complex backend tasks. Great work, and see you in the next part of DiscoverHealth!
