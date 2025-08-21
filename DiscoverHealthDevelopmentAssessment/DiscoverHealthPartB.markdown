@@ -1,4 +1,4 @@
-# Week 6: DiscoverHealth Part B – Building a React Front-End for the Healthcare API
+# DiscoverHealth Part B – Building a React Front-End for the Healthcare API
 
 ## Introduction
 
