@@ -1,23 +1,23 @@
-# Week 8: DiscoverHealth Part E – Session-Based Login and Access Control
+# Week 8: DiscoverHealth Part E – Session-Based Login, Signup, and Access Control
 
 ## Introduction
 
-In **DiscoverHealth Part E**, you’ll enhance the Part D application to meet Tasks 10 and 11 by implementing a session-based login system on the main index page and restricting resource addition to logged-in users. Task 10 adds login, logout, and signup functionality, with a persistent “Logged in as {username}” message. Task 11 restricts POST `/api/resources` (Tasks 2 and 9) to authenticated users with user-friendly errors. You’ll use **Windows Command Prompt** or **macOS Terminal**, building on Part D to achieve a 62% grade threshold.
+In **DiscoverHealth Part E**, you’ll enhance the Part D application to meet Tasks 10 and 11 by implementing a session-based login and signup system on the main index page and restricting resource addition to logged-in users. Task 10 includes a login form, a signup form, a “Logged in as {username}” message, logout functionality, and persistent login state on page reload. Task 11 restricts POST `/api/resources` to authenticated users with user-friendly errors. You’ll use **Windows Command Prompt** or **macOS Terminal**, building on Part D to achieve a 62% grade threshold.
 
 ### What You’ll Learn
 
-* **Session-Based Authentication (Task 10)**: Use Express sessions for login, logout, and signup, with persistent state.
+* **Session-Based Authentication (Task 10)**: Use Express sessions for login, signup, logout, and persistent state with username display.
 * **Access Control (Task 11)**: Restrict API endpoints to logged-in users.
-* **Frontend Integration**: Add login/logout UI to the index page.
-* **User Feedback**: Display clear error messages for unauthorized actions.
+* **Frontend Integration**: Add login and signup forms to the index page.
+* **User Feedback**: Display clear error messages and username after login.
 
 ### What You’ll Do
 
 1. **Exercise A**: Set up `DiscoverHealthPartE` folder, copy Part D files, install `express-session` and `bcrypt`.
 2. **Exercise B**: Update `server.js` for session middleware, login, signup, logout, and restricted POST.
-3. **Exercise C**: Update `SearchView.jsx` for login/logout UI and `App.jsx` to remove login route.
-4. **Exercise D**: Update `AddResourceView.jsx` for session cookies.
-5. **Exercise E**: Run servers, test login persistence, logout, signup, and restricted resource addition.
+3. **Exercise C**: Update `SearchView.jsx` for login/signup forms and username display, update `App.jsx` to remove login route.
+4. **Exercise D**: Verify `AddResourceView.jsx` for session cookies.
+5. **Exercise E**: Run servers, test login, signup, username display, and restricted resource addition.
 6. **Save Everything**: Organize work and (optionally) push to GitHub.
 
 ### Prerequisites
@@ -33,7 +33,7 @@ In **DiscoverHealth Part E**, you’ll enhance the Part D application to meet Ta
 ### What is Part E?
 
 **DiscoverHealth Part E** implements Tasks 10 and 11:
-* **Task 10**: Session-based login on the index page (`/`), showing “Logged in as {username}”, with logout and signup routes (no signup form). Login persists on page reload.
+* **Task 10**: Session-based login and signup forms on the index page (`/`), showing “Logged in as {username}”, with logout and persistent state on reload.
 * **Task 11**: Restrict POST `/api/resources` to logged-in users, showing errors like “Unauthorized: Please log in”.
 
 ### How Part E Builds on Part D
@@ -44,16 +44,16 @@ In **DiscoverHealth Part E**, you’ll enhance the Part D application to meet Ta
   * `AddResourceView.jsx`: Manual resource addition.
 * **Part E**:
   * Update `server.js` for sessions, login, signup, logout, and restricted POST.
-  * Update `SearchView.jsx` for login/logout UI and persistent state.
+  * Update `SearchView.jsx` for login/signup forms, username display, and persistent state.
   * Update `App.jsx` to remove `/login` route.
   * Update `AddResourceView.jsx` for session cookies.
 
 ### Key Concepts
 
 * **Express Sessions**: Store `userId` server-side, send cookies to client.
-* **Persistent Login**: Use GET `/api/user` to check session on reload.
+* **Persistent Login**: Use GET `/api/user` to check session and display username.
 * **Authentication Middleware**: Restrict endpoints with `req.session.userId`.
-* **Frontend**: Use `credentials: 'include'` for session cookies.
+* **Frontend**: Use `credentials: 'include'` for session cookies, toggle login/signup forms.
 
 ## Step 2: Exercise A – Set Up the Project
 
@@ -137,7 +137,7 @@ In **DiscoverHealth Part E**, you’ll enhance the Part D application to meet Ta
 
 ## Step 3: Exercise B – Update server.js for Authentication
 
-Add session middleware, login, signup, logout, and restrict POST `/api/resources`.
+Verify `server.js` supports login, signup, logout, and restricted POST.
 
 ### B.1: Update `server.js`
 
@@ -347,17 +347,12 @@ Add session middleware, login, signup, logout, and restrict POST `/api/resources
      ```
 
 5. **Code Explanation**:
-   * **New Additions**:
-     - GET `/api/user`: Retrieves current user for persistent login.
-     - POST `/api/login`: Authenticates user, sets session.
-     - POST `/api/signup`: Creates new user.
-     - POST `/api/logout`: Destroys session.
-     - `isAuthenticated`: Restricts POST `/api/resources`.
-   * **Function**: Supports Task 10 (login, signup, logout, persistence) and Task 11 (access control).
+   * **Verified**: Supports login, signup, logout, and restricted POST.
+   * **Function**: No changes needed, as POST `/api/signup` and GET `/api/user` are correct.
 
 ## Step 4: Exercise C – Update SearchView.jsx and App.jsx
 
-Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
+Add signup form and fix login display in `SearchView.jsx`, verify `App.jsx`.
 
 ### C.1: Update `SearchView.jsx`
 
@@ -378,7 +373,7 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
    import 'leaflet/dist/leaflet.css';
 
    /**
-    * SearchView handles search, map display, and login/logout on the index page.
+    * SearchView handles search, map display, login, signup, and logout on the index page.
     * Displays resources as a list and map markers, and allows map-based resource addition.
     */
    export default function SearchView() {
@@ -392,7 +387,9 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
      });
      const [clickedLatLon, setClickedLatLon] = useState(null);
      const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+     const [signupForm, setSignupForm] = useState({ username: '', password: '' });
      const [user, setUser] = useState(null);
+     const [showLoginForm, setShowLoginForm] = useState(true);
      const mapRef = useRef(null);
      const mapInstanceRef = useRef(null);
      const markersRef = useRef([]);
@@ -405,11 +402,15 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
              credentials: 'include'
            });
            const data = await res.json();
-           if (res.ok) {
+           if (res.ok && data.username) {
              setUser(data.username);
+             setMessage('Welcome back, ' + data.username + '!');
+           } else {
+             setUser(null);
            }
          } catch (err) {
            console.error('Fetch user error:', err);
+           setError('Failed to check login status.');
          }
        }
        fetchUser();
@@ -559,6 +560,11 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
        setLoginForm(prev => ({ ...prev, [name]: value }));
      }
 
+     function handleSignupChange(e) {
+       const { name, value } = e.target;
+       setSignupForm(prev => ({ ...prev, [name]: value }));
+     }
+
      async function handleLoginSubmit(e) {
        e.preventDefault();
        setError('');
@@ -576,11 +582,40 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
          });
          const data = await res.json();
          if (res.ok) {
-           setMessage('Login successful!');
+           setMessage(`Login successful! Welcome, ${data.username}!`);
            setUser(data.username);
            setLoginForm({ username: '', password: '' });
          } else {
            setError(data.error || 'Failed to log in.');
+         }
+       } catch (err) {
+         console.error(err);
+         setError('An unexpected error occurred.');
+       }
+     }
+
+     async function handleSignupSubmit(e) {
+       e.preventDefault();
+       setError('');
+       setMessage('');
+       if (!signupForm.username.trim() || !signupForm.password.trim()) {
+         setError('Username and password are required.');
+         return;
+       }
+       try {
+         const res = await fetch('http://localhost:3000/api/signup', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(signupForm),
+           credentials: 'include'
+         });
+         const data = await res.json();
+         if (res.ok) {
+           setMessage(`Signup successful! Please log in as ${signupForm.username}.`);
+           setSignupForm({ username: '', password: '' });
+           setShowLoginForm(true);
+         } else {
+           setError(data.error || 'Failed to sign up.');
          }
        } catch (err) {
          console.error(err);
@@ -598,6 +633,7 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
          if (res.ok) {
            setMessage('Logout successful!');
            setUser(null);
+           setShowLoginForm(true);
          } else {
            setError(data.error || 'Failed to log out.');
          }
@@ -617,24 +653,55 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
              <button onClick={handleLogout} style={{ marginLeft: '16px' }}>Logout</button>
            </div>
          ) : (
-           <form onSubmit={handleLoginSubmit} style={{ margin: '16px 0' }}>
-             <input
-               name="username"
-               value={loginForm.username}
-               onChange={handleLoginChange}
-               placeholder="Username"
-               style={{ marginRight: '8px' }}
-             />
-             <input
-               name="password"
-               value={loginForm.password}
-               onChange={handleLoginChange}
-               placeholder="Password"
-               type="password"
-               style={{ marginRight: '8px' }}
-             />
-             <button type="submit">Login</button>
-           </form>
+           <div style={{ margin: '16px 0' }}>
+             {showLoginForm ? (
+               <>
+                 <form onSubmit={handleLoginSubmit} style={{ marginBottom: '16px' }}>
+                   <h3>Login</h3>
+                   <input
+                     name="username"
+                     value={loginForm.username}
+                     onChange={handleLoginChange}
+                     placeholder="Username"
+                     style={{ marginRight: '8px' }}
+                   />
+                   <input
+                     name="password"
+                     value={loginForm.password}
+                     onChange={handleLoginChange}
+                     placeholder="Password"
+                     type="password"
+                     style={{ marginRight: '8px' }}
+                   />
+                   <button type="submit">Login</button>
+                 </form>
+                 <button onClick={() => setShowLoginForm(false)}>Need an account? Sign Up</button>
+               </>
+             ) : (
+               <>
+                 <form onSubmit={handleSignupSubmit} style={{ marginBottom: '16px' }}>
+                   <h3>Sign Up</h3>
+                   <input
+                     name="username"
+                     value={signupForm.username}
+                     onChange={handleSignupChange}
+                     placeholder="Username"
+                     style={{ marginRight: '8px' }}
+                   />
+                   <input
+                     name="password"
+                     value={signupForm.password}
+                     onChange={handleSignupChange}
+                     placeholder="Password"
+                     type="password"
+                     style={{ marginRight: '8px' }}
+                   />
+                   <button type="submit">Sign Up</button>
+                 </form>
+                 <button onClick={() => setShowLoginForm(true)}>Already have an account? Login</button>
+               </>
+             )}
+           </div>
          )}
          <form onSubmit={handleSearch} style={{ margin: '16px 0' }}>
            <input
@@ -691,7 +758,7 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
    * **Windows**: Save as `"SearchView.jsx"` (All Files).
    * **macOS**: `Ctrl+O`, Enter, `Ctrl+X`.
 
-### C.2: Update `App.jsx`
+### C.2: Verify `App.jsx`
 
 1. **Path**: `C:\Users\Nneka\Desktop\Solent University\FinalProject\DiscoverHealthPartE\frontend\src\App.jsx`
 
@@ -701,7 +768,7 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
    nano App.jsx    # macOS
    ```
 
-3. **Replace with**:
+3. **Verify**:
    ```jsx
    import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
    import SearchView from './SearchView';
@@ -727,15 +794,13 @@ Add login/logout UI to `SearchView.jsx` and update `App.jsx`.
    export default App;
    ```
 
-4. **Save**:
-   * **Windows**: Save as `"App.jsx"` (All Files).
-   * **macOS**: `Ctrl+O`, Enter, `Ctrl+X`.
+4. **Save**: No changes needed.
 
-## Step 5: Exercise D – Update AddResourceView.jsx
+## Step 5: Exercise D – Verify AddResourceView.jsx
 
-Add `credentials: 'include'` for session cookies.
+Ensure `AddResourceView.jsx` includes session cookies.
 
-### D.1: Update `AddResourceView.jsx`
+### D.1: Verify `AddResourceView.jsx`
 
 1. **Path**: `C:\Users\Nneka\Desktop\Solent University\FinalProject\DiscoverHealthPartE\frontend\src\AddResourceView.jsx`
 
@@ -745,7 +810,7 @@ Add `credentials: 'include'` for session cookies.
    nano AddResourceView.jsx    # macOS
    ```
 
-3. **Replace with**:
+3. **Verify**:
    ```jsx
    import { useState } from 'react';
 
@@ -840,9 +905,7 @@ Add `credentials: 'include'` for session cookies.
    }
    ```
 
-4. **Save**:
-   * **Windows**: Save as `"AddResourceView.jsx"` (All Files).
-   * **macOS**: `Ctrl+O`, Enter, `Ctrl+X`.
+4. **Save**: No changes needed.
 
 ## Step 6: Exercise E – Run and Test the Application
 
@@ -873,25 +936,30 @@ Add `credentials: 'include'` for session cookies.
    * Visit `http://localhost:5173/`.
    * **Task 10**:
      - See login form on index page.
+     - Click “Need an account? Sign Up” to show signup form.
+     - Sign up with new credentials (e.g., username: “newuser”, password: “test”).
+     - Expect “Signup successful! Please log in as newuser.” and switch to login form.
      - Log in with valid credentials (e.g., username: “jsmith”, password: “test”).
      - Expect “Logged in as jsmith” and logout button.
-     - Reload page; expect login state to persist.
+     - Reload page; expect “Logged in as jsmith” to persist.
      - Click logout; expect login form to reappear.
-     - Test invalid credentials; expect error.
+     - Test invalid credentials; expect error (e.g., “Invalid username or password”).
+     - Test duplicate username in signup; expect “Username already exists”.
    * **Task 11**:
      - Without logging in, try adding resource via `/add` or map click.
      - Expect error: “Unauthorized: Please log in”.
      - Log in, then add resource; expect success.
    * **Postman Tests**:
      - POST `http://localhost:3000/api/signup` with `{ "username": "testuser", "password": "testpass" }`; expect 201.
-     - POST `http://localhost:3000/api/login` with above credentials; copy session cookie.
-     - GET `/api/user` with cookie; expect username.
+     - POST `http://localhost:3000/api/login` with above credentials; copy session cookie, expect username in response.
+     - GET `/api/user` with cookie; expect `{ "username": "testuser" }`.
      - POST `/api/resources` without cookie; expect 401.
      - POST `/api/resources` with cookie and valid data; expect 201.
      - POST `/api/logout` with cookie; expect 200.
 
 4. **Troubleshooting**:
-   * **Login Not Persistent**: Verify GET `/api/user` and `credentials: 'include'`.
+   * **Login Not Showing Username**: Check GET `/api/user` response, ensure `credentials: 'include'` in fetch.
+   * **Signup Fails**: Verify POST `/api/signup` response, check for duplicate usernames.
    * **401 Errors**: Ensure session cookies are sent.
    * **Dependency Issues**:
      ```bash
@@ -908,7 +976,7 @@ Add `credentials: 'include'` for session cookies.
    ```bash
    git init
    git add .
-   git commit -m "DiscoverHealth Part E: Session-Based Login and Access Control"
+   git commit -m "DiscoverHealth Part E: Updated Login and Signup with Username Display"
    ```
 
 2. **Create `.gitignore`**:
@@ -931,14 +999,14 @@ Add `credentials: 'include'` for session cookies.
 
 ## Step 8: Summary and Next Steps
 
-You’ve completed DiscoverHealth Part E, meeting Tasks 10 and 11! Recap:
+You’ve updated DiscoverHealth Part E, meeting Tasks 10 and 11 with enhancements! Recap:
 * Copied Part D files.
-* Added session-based login, signup, and logout in `server.js`.
-* Integrated login/logout UI in `SearchView.jsx` with persistent state.
-* Restricted resource addition with user-friendly errors.
-* Tested all functionality.
+* Verified `server.js` for sessions, login, signup, logout, and restricted POST.
+* Updated `SearchView.jsx` for signup form and fixed login username display.
+* Tested signup, login, username display, and restricted resource addition.
 
 **Next Steps**:
 * Enhance security with `bcrypt` for password hashing.
 * Add client-side navigation guards for `/add`.
+* Improve UI styling for login/signup forms.
 * Investigate OAuth2 for real-world authentication.
