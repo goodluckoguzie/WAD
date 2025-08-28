@@ -1,4 +1,4 @@
-# Week 8: DiscoverHealth Part E – Session-Based Login, Signup, and Access Control
+# DiscoverHealth Part E – Session-Based Login, Signup, and Access Control
 
 ## Introduction
 
