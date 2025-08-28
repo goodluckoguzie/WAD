@@ -1,4 +1,4 @@
-# Week 9: DiscoverHealth Part F – Reviews and Enhanced Map Functionality with Updated Authentication
+# DiscoverHealth Part F – Reviews and Enhanced Map Functionality with Updated Authentication
 
 ## Introduction
 
