@@ -1,4 +1,4 @@
-# Week 6: DiscoverHealth Part C – Adding Error-Checking and Validation
+# DiscoverHealth Part C – Adding Error-Checking and Validation
 
 ## Introduction
 
