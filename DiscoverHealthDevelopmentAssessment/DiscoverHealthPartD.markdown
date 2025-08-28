@@ -1,4 +1,4 @@
-# Week 7: DiscoverHealth Part D – Adding a Map with Leaflet
+# DiscoverHealth Part D – Adding a Map with Leaflet
 
 ## Introduction
 
