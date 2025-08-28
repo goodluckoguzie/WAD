@@ -2,57 +2,55 @@
 
 ## Introduction
 
-In **DiscoverHealth Part C**, you’ll enhance the application from Part B by implementing error-checking for Task 7 of the assignment. This involves validating input data in the backend API for adding healthcare resources (Task 2 from Part A) and displaying server-side errors in the frontend add-resource form (Task 5 from Part B). You’ll use **Windows Command Prompt** or **macOS Terminal** to set up the project, building on Part B to achieve a 48% grade threshold.
+In **DiscoverHealth Part C**, you’ll enhance the Part B application to meet Task 7 of the assignment by adding server-side validation for the POST `/api/resources` endpoint (Task 2 from Part A) and ensuring the frontend displays these errors in the add-resource form (Task 5 from Part B). This improves data integrity and user experience by catching invalid inputs on the server and showing clear error messages in the React UI. You’ll use **Windows Command Prompt** or **macOS Terminal**, building on Part B to achieve a 48% grade threshold.
 
 ### What You’ll Learn
 
-* **Backend Validation**: Validate POST data for required fields, returning HTTP 400 errors if invalid.
-* **Frontend Error Handling**: Display server error messages in the React UI using state.
-* **HTTP Status Codes**: Use 400 Bad Request for validation failures.
-* **User Feedback**: Provide clear error messages to improve usability.
+* **Backend Validation**: Check for missing or empty fields in POST requests, returning 400 Bad Request errors.
+* **Frontend Error Handling**: Display server errors in the React UI using state.
+* **HTTP Status Codes**: Use 400 for validation failures.
+* **User Feedback**: Provide specific error messages to guide users.
 
 ### What You’ll Do
 
-1. **Exercise A**: Set up a new project folder `DiscoverHealthPartC`, copy files from Part B (`discoverhealth.db`, `server.js`, `frontend` folder), and install dependencies.
-2. **Exercise B**: Update `server.js` to validate POST `/api/resources` data, checking for missing fields.
-3. **Exercise C**: Verify `AddResourceView.jsx` handles server errors correctly.
-4. **Exercise D**: Run both servers and test validation in the browser and (optionally) Postman/RESTer.
+1. **Exercise A**: Set up `DiscoverHealthPartC` folder, copy Part B files (`discoverhealth.db`, `server.js`, `frontend`), and install dependencies.
+2. **Exercise B**: Update `server.js` to validate POST `/api/resources` data.
+3. **Exercise C**: Verify `AddResourceView.jsx` handles server errors.
+4. **Exercise D**: Run servers and test validation in browser and (optionally) Postman/RESTer.
 5. **Save Everything**: Organize work and (optionally) push to GitHub.
 
 ### Prerequisites
 
-* Completed **DiscoverHealth Part B** with a working React frontend, Express server, and `discoverhealth.db`.
+* Completed **DiscoverHealth Part B** with working React frontend, Express server, and `discoverhealth.db`.
 * **Node.js** installed (check: `node --version`, `npm --version`).
-* Familiarity with command-line commands (`cd`, `mkdir`, `copy`/`cp`).
-* Part B project folder available for copying.
+* Familiarity with command-line (`cd`, `mkdir`, `copy`/`cp`).
+* Part B project folder available at `C:\Users\Nneka\Desktop\Solent University\FinalProject\DiscoverHealthPartB`.
 * Install Node.js from [nodejs.org](https://nodejs.org) if needed.
 
 ## Step 1: Understanding the Basics
 
 ### What is Part C?
 
-**DiscoverHealth Part C** adds error-checking to meet Task 7:
-* **Backend**: Validate POST data for adding resources (name, category, country, region, lat, lon, description) and return 400 errors if fields are missing or empty.
-* **Frontend**: Display these server errors in the add-resource form for user feedback.
+**DiscoverHealth Part C** implements Task 7:
+* **Backend**: Validate POST `/api/resources` data, ensuring all fields (`name`, `category`, `country`, `region`, `lat`, `lon`, `description`) are present and non-empty, returning 400 errors if invalid.
+* **Frontend**: Display server errors in the add-resource form for user feedback.
 
 ### How Part C Builds on Part B
 
 * **Part B**:
-  * POST `/api/resources`: Accepts resource data without validation.
+  * POST `/api/resources`: Accepts data without server-side validation.
   * `AddResourceView.jsx`: Has client-side validation and basic server error handling.
 * **Part C**:
-  * Backend: Add server-side validation in `server.js`.
-  * Frontend: Leverage existing error handling in `AddResourceView.jsx` to show server errors.
+  * Add server-side validation in `server.js`.
+  * Use existing `AddResourceView.jsx` error handling to show server errors.
 
 ### Key Concepts
 
 * **Validation**: Check `req.body` fields in Express using `if` conditions.
-* **HTTP Errors**: Return `res.status(400).json({ error: '...' })` for invalid data.
-* **Frontend Error Display**: Use React `useState` to show `data.error` from server responses.
+* **HTTP Errors**: Return `res.status(400).json({ error: '...' })`.
+* **Frontend Error Display**: Use `useState` to show `data.error`.
 
 ## Step 2: Exercise A – Set Up the Project
-
-Create a new folder and copy Part B files.
 
 1. **Open Command Prompt (Windows) or Terminal (macOS)**:
    * **Windows**: `Win + R`, `cmd`, Enter.
@@ -60,8 +58,8 @@ Create a new folder and copy Part B files.
 
 2. **Create Project Folder**:
    ```bash
-   cd %userprofile%\Desktop  # Windows
-   cd ~/Desktop             # macOS
+   cd %userprofile%\Desktop\Solent University\FinalProject  # Windows
+   cd ~/Desktop/Solent University/FinalProject             # macOS
    mkdir DiscoverHealthPartC
    cd DiscoverHealthPartC
    ```
@@ -90,6 +88,7 @@ Create a new folder and copy Part B files.
    ```bash
    npm install express better-sqlite3 cors
    ```
+   * Creates `node_modules` and `package-lock.json`.
 
 5. **Install Frontend Dependencies**:
    ```bash
@@ -126,7 +125,7 @@ Create a new folder and copy Part B files.
 
 ## Step 3: Exercise B – Add Validation to the Express Server
 
-Update `server.js` to validate POST data.
+Update `server.js` to validate POST data, adding server-side checks for missing or empty fields.
 
 ### B.1: Update `server.js`
 
@@ -244,13 +243,35 @@ Update `server.js` to validate POST data.
      ren server.js.txt server.js
      ```
 
-5. **Changes**:
-   * Added validation in POST `/api/resources` to check for missing/empty fields.
-   * Returns 400 with specific error message.
+5. **Code Explanation**:
+   * **Imports and Setup**:
+     - `const express = require('express');`: Imports Express for the web server.
+     - `const Database = require('better-sqlite3');`: Imports better-sqlite3 for database operations.
+     - `const path = require('path');`, `const fs = require('fs');`: Locate the database file.
+     - `const cors = require('cors');`: Enables CORS for frontend communication.
+     - `app.use(cors({ origin: 'http://localhost:5173', credentials: true }));`: Allows requests from React dev server on port 5173.
+     - `const dbPath = path.join(__dirname, 'discoverhealth.db');`: Constructs path to `discoverhealth.db`.
+     - `const db = new Database(dbPath);`: Opens SQLite database.
+     - `console.log('[BOOT] ...');`: Logs database file status.
+     - `try { ... } catch (e) { ... }`: Lists database tables for debugging.
+     - `app.use(express.json());`: Parses JSON requests.
+   * **GET `/` Route**: Returns a friendly message for the root URL.
+   * **GET `/api/resources` Route**:
+     - Extracts `region` query parameter.
+     - Returns 400 if missing, else queries resources and returns JSON.
+   * **POST `/api/resources` Route (Updated)**:
+     - Destructures `req.body` for fields.
+     - **New Addition**: Validates fields with `if (!name?.trim() || ...)` to check for missing (`undefined`) or empty (`""` or `" "`) fields, using optional chaining (`?.`) for safety.
+     - Returns 400 with error message if validation fails.
+     - Inserts validated data, trimming strings to clean inputs.
+     - Returns 201 with new resource ID or 500 on database error.
+   * **Function of Addition**: Ensures data integrity by preventing invalid insertions and provides clear error messages (e.g., “All fields are required...”) for the frontend.
+   * **POST `/api/resources/:id/recommend` Route**: Increments recommendations, handling errors.
+   * **Server Start**: Listens on port 3000.
 
 ## Step 4: Exercise C – Verify Frontend Error Handling
 
-Confirm `AddResourceView.jsx` handles server errors.
+Confirm `AddResourceView.jsx` handles server errors correctly.
 
 ### C.1: Verify `AddResourceView.jsx`
 
@@ -358,14 +379,32 @@ Confirm `AddResourceView.jsx` handles server errors.
    ```
 
 4. **Save**:
-   * Save as `"AddResourceView.jsx"` (All Files).
+   * **Windows**: Save as `"AddResourceView.jsx"` (All Files).
+   * **macOS**: `Ctrl+O`, Enter, `Ctrl+X`.
    * Verify:
      ```bash
      dir
      ren AddResourceView.jsx.txt AddResourceView.jsx
      ```
 
-5. **Note**: No changes needed; the script already handles server errors via `data.error`.
+5. **Code Explanation**:
+   * **Imports**: `useState` for managing form state, success, and error messages.
+   * **State**:
+     - `form`: Stores input fields.
+     - `message`: Shows success (e.g., “Resource added...”).
+     - `error`: Shows errors from client or server.
+   * **Event Handlers**:
+     - `handleChange`: Updates form state on input changes.
+     - `handleSubmit`:
+       - Prevents page reload.
+       - Clears previous messages.
+       - Client-side validation checks for empty fields.
+       - Sends POST request with JSON data, converting `lat`/`lon` to numbers.
+       - On success (201), shows success message and clears form.
+       - On failure, sets `error` to `data.error` (e.g., “All fields are required...”) or fallback.
+       - Catches network errors.
+   * **JSX**: Renders form with inputs, displays errors in red, success in green.
+   * **Function**: Displays server errors from `server.js`, enhancing user feedback.
 
 ## Step 5: Exercise D – Run and Test the Application
 
@@ -374,14 +413,25 @@ Confirm `AddResourceView.jsx` handles server errors.
    cd C:\Users\Nneka\Desktop\Solent University\FinalProject\DiscoverHealthPartC
    node server.js
    ```
+   * Expect:
+     ```
+     [BOOT] Using DB at: .../discoverhealth.db (FOUND)
+     [BOOT] Tables in DB: [ 'healthcare_resources', 'users', 'reviews' ]
+     Server running at http://localhost:3000
+     ```
 
 2. **Start React Dev Server** (new terminal):
-   * If dependencies are installed:
+   * If dependencies installed:
      ```bash
      cd C:\Users\Nneka\Desktop\Solent University\FinalProject\DiscoverHealthPartC\frontend
      npm run dev
      ```
-   * If errors occur:
+     * Expect:
+       ```
+       VITE v7.1.3  ready in ...ms
+       ➜  Local:   http://localhost:5173/
+       ```
+   * If errors:
      ```bash
      npm install
      npm install react-router-dom
@@ -390,12 +440,28 @@ Confirm `AddResourceView.jsx` handles server errors.
 
 3. **Test Validation**:
    * Visit `http://localhost:5173/add`.
-   * Submit form with missing fields (e.g., no name).
+   * Submit form with missing fields (e.g., no name or lat).
    * Expect red error: “All fields are required: name, category, country, region, lat, lon, description”.
+   * Submit valid data (e.g., Name: “Test Clinic”, Category: “Clinic”, Country: “UK”, Region: “London”, Lat: 51.5, Lon: -0.1, Description: “Test”) to confirm success message.
    * Test with Postman:
      * POST `http://localhost:3000/api/resources`
-     * Body: `{ "name": "Test", "category": "Clinic" }` (missing fields)
+     * Body: `{ "name": "Test", "category": "Clinic" }`
      * Expect: 400, `{ "error": "All fields are required..." }`
+     * Body: `{ "name": "Test Clinic", "category": "Clinic", "country": "UK", "region": "London", "lat": 51.5, "lon": -0.1, "description": "Test" }`
+     * Expect: 201, `{ "id": X }`
+
+4. **Troubleshooting**:
+   * **No Errors Displayed**: Check browser console (F12) and server logs.
+   * **Default Vite Page**: Verify `App.jsx`, `SearchView.jsx`, `AddResourceView.jsx` contents and names (not `.txt`).
+   * **CORS Errors**: Confirm `cors` middleware in `server.js`.
+   * **Dependency Issues**:
+     ```bash
+     cd frontend
+     del node_modules /s /q
+     del package-lock.json
+     npm install
+     npm install react-router-dom
+     ```
 
 ## Step 6: (Optional) Save to GitHub
 
@@ -426,13 +492,13 @@ Confirm `AddResourceView.jsx` handles server errors.
 
 ## Step 7: Summary and Next Steps
 
-You’ve enhanced DiscoverHealth with validation! Recap:
+You’ve enhanced DiscoverHealth with server-side validation, meeting Task 7! Recap:
 * Copied Part B files.
-* Updated `server.js` for POST validation.
-* Verified `AddResourceView.jsx` for error display.
-* Tested error messages.
+* Added validation in `server.js` for POST `/api/resources`, ensuring all fields are present and non-empty.
+* Verified `AddResourceView.jsx` displays server errors like “All fields are required...”.
+* Tested error handling with invalid and valid inputs.
 
 **Next Steps**:
-* Proceed to Part D (Leaflet map integration).
-* Add advanced validation (e.g., numeric checks for lat/lon).
-* Use browser console (F12) for debugging.
+* Proceed to Part D (Tasks 8-9: Leaflet map integration).
+* Enhance validation (e.g., check `lat`/`lon` are valid numbers using `isNaN`).
+* Debug using browser console (F12) and server logs.
