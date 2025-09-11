@@ -993,3 +993,67 @@ You’ve updated DiscoverHealth Part F, meeting Tasks 12 and 13 with Part E’s 
 * Enhance popup styling with CSS.
 * Implement review pagination for large datasets.
 * Add password hashing with `bcrypt` for security.
+
+## Troubleshooting: White Screen After Searching a Region
+
+If you follow the Part F instructions but encounter a **blank white page** when searching for a region or city, it's likely because your **backend API still returns resources without a `reviews` array** (for example, if you haven't updated `server.js` to include reviews).  In this situation, the React code in `SearchView.jsx` tries to read `resource.reviews.length` and map over `resource.reviews`, which throws an error when `reviews` is undefined and causes the page to go blank.
+
+### Symptom
+
+* Search for a region/city in Part F → page suddenly goes white.
+
+### Cause
+
+* `resource.reviews` is `undefined` in your API response (because the server isn't yet attaching reviews).
+* The UI references `reviews.length` and `reviews.map(...)` without checking for `undefined`.
+
+### Solution
+
+Modify `SearchView.jsx` so that it **normalizes the `reviews` property** before use and **uses optional chaining** in the resource list.  This prevents runtime errors even if the backend doesn't include reviews.  Below is an example patch you can apply to your file:
+
+```jsx
+data.forEach(resource => {
+  // Normalize reviews so we never crash if backend didn't include them
+  const reviewsArr = Array.isArray(resource.reviews) ? resource.reviews : [];
+
+  const reviewForm = user ? `
+    <div>
+      <h4>Add Review</h4>
+      <textarea id="review-${resource.id}" placeholder="Write your review" rows="2" style="width:100%;"></textarea>
+      <button onclick="submitReview(${resource.id})">Submit Review</button>
+    </div>
+  ` : '<p>Please log in to add a review.</p>';
+
+  const reviewsList = reviewsArr.length > 0
+    ? `<h4>Reviews:</h4><ul>${reviewsArr.map(r => `<li>${r}</li>`).join('')}</ul>`
+    : '<p>No reviews yet.</p>';
+
+  const popupContent = `
+    <b>${resource.name}</b><br>
+    ${resource.description}<br>
+    ${reviewsList}
+    ${reviewForm}
+  `;
+
+  const marker = L.marker([resource.lat, resource.lon])
+    .addTo(mapInstanceRef.current)
+    .bindPopup(popupContent);
+  markersRef.current.push(marker);
+});
+
+// In the resource list rendering:
+{(resource.reviews?.length ?? 0) > 0 && (
+  <>
+    <h4>Reviews:</h4>
+    <ul>
+      {(resource.reviews ?? []).map((review, index) => (
+        <li key={index}>{review}</li>
+      ))}
+    </ul>
+  </>
+)}
+
+// Apply the same normalization when re-rendering markers after a review is submitted.
+```
+
+After applying this fix, the search page will render correctly even when `reviews` is missing from the API response, and the blank white page issue will disappear.
